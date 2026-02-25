@@ -4,36 +4,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Saham Parts Pro</title>
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
-        body { padding-top: 15px; background-color: #0a0a0a; }
+        /* Using Bootstrap CSS variables so they auto-switch when Light/Dark mode toggles */
+        body { 
+            padding-top: 15px; 
+            transition: background-color 0.3s, color 0.3s; 
+        }
         .search-container { 
             position: sticky; top: 0; z-index: 1000; 
-            background-color: #0a0a0a; padding-bottom: 15px; 
-            border-bottom: 1px solid #333; 
+            background-color: var(--bs-body-bg); 
+            padding-bottom: 15px; 
+            border-bottom: 1px solid var(--bs-border-color); 
+            transition: background-color 0.3s;
         }
         .card { transition: 0.2s; border-radius: 15px; } 
-        .card:hover { border-color: #0d6efd; }
-        .cost-text { color: #6c757d; font-size: 0.75rem; }
+        .card:hover { border-color: var(--bs-primary) !important; }
+        .cost-text { font-size: 0.75rem; }
         .pagination-container { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
     </style>
 </head>
 <body>
 <div class="container-fluid">
     <div class="search-container">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="mb-0 text-primary">💎 سهم </h4>
-            <span class="badge bg-secondary rounded-pill px-3 fs-6" id="totalBadge">Loading File...</span>
+        <div class="d-flex justify-content-between align-items-center mb-3 px-1">
+            <h4 class="mb-0 text-primary fw-bold">💎 سهم</h4>
+            
+            <div>
+                <button class="btn btn-sm btn-outline-warning rounded-pill px-3 fw-bold me-2" onclick="toggleTheme()" id="themeToggleBtn">
+                    ☀️ Light
+                </button>
+                <span class="badge bg-secondary rounded-pill px-3 py-2 fs-6" id="totalBadge">Loading...</span>
+            </div>
         </div>
         
-        <input type="text" id="searchInput" class="form-control form-control-lg border-primary rounded-pill px-4" placeholder="Search code (e.g., 2 MISM T)..." autofocus autocomplete="off" disabled>
+        <input type="text" id="searchInput" class="form-control form-control-lg border-primary rounded-pill px-4 shadow-sm" placeholder="Search code (e.g., 2 MISM T)..." autofocus autocomplete="off" disabled>
         
         <div class="pagination-container px-2">
             <div id="resultCount" class="text-muted small fw-bold">Please wait, downloading data...</div>
             <div id="paginationControls" class="d-none">
                 <button class="btn btn-sm btn-outline-primary rounded-pill px-3" id="prevBtn" onclick="changePage(-1)">◀ Prev</button>
-                <span class="text-white small fw-bold mx-2" id="pageIndicator">Page 1</span>
+                <span class="small fw-bold mx-2" id="pageIndicator">Page 1</span>
                 <button class="btn btn-sm btn-outline-primary rounded-pill px-3" id="nextBtn" onclick="changePage(1)">Next ▶</button>
             </div>
         </div>
@@ -42,15 +55,68 @@
     <div class="row g-2 mt-2" id="resultsBody"></div>
     
     <div id="bottomPagination" class="d-none justify-content-center my-4">
-        <button class="btn btn-outline-primary rounded-pill px-4 me-2" onclick="changePage(-1)">◀ Prev</button>
-        <button class="btn btn-outline-primary rounded-pill px-4" onclick="changePage(1)">Next ▶</button>
+        <button class="btn btn-outline-primary rounded-pill px-4 me-2 shadow-sm" onclick="changePage(-1)">◀ Prev</button>
+        <button class="btn btn-outline-primary rounded-pill px-4 shadow-sm" onclick="changePage(1)">Next ▶</button>
     </div>
 </div>
+
+<!-- ================= ORDER MODAL (NEW) ================= -->
+<div class="modal fade" id="orderModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold text-primary">🛒 Place Purchase Order</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        
+        <div class="mb-3">
+            <label class="form-label text-muted small fw-bold">Part Details</label>
+            <input type="text" id="modalPartInfo" class="form-control" readonly>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label text-muted small fw-bold">Vehicle Origin (Select Tab)</label>
+            <select id="modalOrigin" class="form-select border-primary shadow-sm">
+                <option value="Japanese">Japanese</option>
+                <option value="Korean">Korean</option>
+                <option value="American">American</option>
+                <option value="Suzuki">Suzuki</option>
+                <option value="Chinese">Chinese</option>
+            </select>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-6">
+                <label class="form-label text-muted small fw-bold">Quantity</label>
+                <input type="number" id="modalQuantity" class="form-control shadow-sm" value="1" min="1">
+            </div>
+            <div class="col-6">
+                <label class="form-label text-muted small fw-bold">Ordered By</label>
+                <input type="text" id="modalOrderedBy" class="form-control shadow-sm" placeholder="Your Name">
+            </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow" id="confirmOrderBtn" onclick="processOrder()">
+            Confirm & Send
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS (Required for Modal to work) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
     // ==========================================
     const MY_PHONE_NUMBER = "966558965937"; 
     const ITEMS_PER_PAGE = 50;
+    // Your exact Google Apps Script Web App URL
+    const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbxL6QViEytvoQCYNuU5JnjaWPSU1aZVv7dHd2y8hfSih4upot4M-zW_oLoezx3hsPH2JA/exec";
     // ==========================================
 
     let allData = [];
@@ -67,11 +133,26 @@
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
 
-    // 1. FETCH AND PARSE THE EXCEL FILE ON LOAD
+    // --- LIGHT/DARK MODE LOGIC ---
+    function toggleTheme() {
+        const htmlTag = document.documentElement;
+        const themeBtn = document.getElementById('themeToggleBtn');
+        
+        if (htmlTag.getAttribute('data-bs-theme') === 'dark') {
+            htmlTag.setAttribute('data-bs-theme', 'light');
+            themeBtn.innerHTML = '🌙 Dark';
+            themeBtn.classList.replace('btn-outline-warning', 'btn-outline-dark');
+        } else {
+            htmlTag.setAttribute('data-bs-theme', 'dark');
+            themeBtn.innerHTML = '☀️ Light';
+            themeBtn.classList.replace('btn-outline-dark', 'btn-outline-warning');
+        }
+    }
+
+    // 1. FETCH AND PARSE THE EXCEL FILE
     async function loadExcelData() {
         try {
-            // Must match the exact filename you upload to GitHub
-            const response = await fetch('ITEMS SAHAM 1.xlsx'); 
+            const response = await fetch('1.xlsx'); 
             const arrayBuffer = await response.arrayBuffer();
             const workbook = XLSX.read(arrayBuffer, { type: 'array' });
             
@@ -109,17 +190,16 @@
             totalBadge.innerText = `${allData.length} Items`;
             searchInput.disabled = false;
             
-            // Render the first 50 items
             renderPage(1);
 
         } catch (error) {
             console.error("Error loading Excel:", error);
             totalBadge.innerText = "Error!";
-            resultCount.innerText = "Could not load file. Is ITEMS SAHAM 1.xlsx in the GitHub repo?";
+            resultCount.innerText = "Could not load file. Is ITEMS SAHAM 1.xlsx uploaded?";
         }
     }
 
-    // 2. SEARCH LOGIC (Filters the array and resets to Page 1)
+    // 2. SEARCH LOGIC
     searchInput.addEventListener('input', function() {
         const query = this.value.trim().toLowerCase();
         
@@ -139,17 +219,14 @@
     function renderPage(page) {
         currentPage = page;
         
-        // Calculate the slice of data to show
         const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
         const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
         const endIndex = startIndex + ITEMS_PER_PAGE;
         const pageData = filteredData.slice(startIndex, endIndex);
 
-        // Update UI Text
         resultCount.textContent = `${filteredData.length} part(s) found`;
         pageIndicator.textContent = `Page ${currentPage} of ${totalPages || 1}`;
         
-        // Show or hide pagination controls based on data size
         if (filteredData.length > ITEMS_PER_PAGE) {
             paginationControls.classList.remove('d-none');
             bottomPagination.classList.remove('d-none');
@@ -164,7 +241,6 @@
 
         resultsBody.innerHTML = '';
         
-        // Render the 50 items
         pageData.forEach(item => {
             const col = document.createElement('div');
             col.className = 'col-12 col-md-6 col-lg-4'; 
@@ -176,31 +252,39 @@
             const safePartNo = (item.part_no || "N/A").replace(/'/g, "\\'");
             
             col.innerHTML = `
-                <div class="card bg-dark border-secondary h-100 shadow-sm">
+                <div class="card border-secondary h-100 shadow-sm">
                     <div class="card-body p-3 d-flex flex-column">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="badge bg-primary fs-6 rounded-pill px-3">${item.item_no || 'No Code'}</span>
-                            <span class="badge ${qtyColor} fs-6 rounded-pill px-3">Qty: ${item.qty}</span>
+                            <span class="badge bg-primary fs-6 rounded-pill px-3 shadow-sm">${item.item_no || 'No Code'}</span>
+                            <span class="badge ${qtyColor} fs-6 rounded-pill px-3 shadow-sm">Qty: ${item.qty}</span>
                         </div>
-                        <h6 class="card-subtitle mb-2 text-warning font-monospace">${item.part_no || 'No Part #'}</h6>
+                        <h6 class="card-subtitle mb-2 text-warning font-monospace fw-bold">${item.part_no || 'No Part #'}</h6>
                         
-                        <p class="card-text small text-white mb-1">${item.eng_name || item.name || ''}</p>
+                        <p class="card-text small mb-1">${item.eng_name || item.name || ''}</p>
                         <p class="card-text small text-info fw-bold mb-3 text-end" dir="rtl">${item.arab_name || ''}</p>
                         
                         <div class="mt-auto">
-                            <div class="d-flex justify-content-between cost-text mb-1 px-1">
+                            <div class="d-flex justify-content-between text-muted cost-text mb-1 px-1 fw-bold">
                                 <span>Cost: ${item.cost}</span>
                                 <span>w/VAT: ${item.cost_vat}</span>
                             </div>
-                            <div class="d-flex justify-content-between text-info small fw-bold pt-1 pb-2 border-top border-secondary px-1">
+                            <div class="d-flex justify-content-between text-primary small fw-bold pt-1 pb-2 border-top border-secondary px-1">
                                 <span class="fs-6">💰 ${item.price} SAR</span>
                                 <span class="fs-6">📍 Loc: ${item.loc || 'N/A'}</span>
                             </div>
                             
-                            <button class="btn btn-sm btn-outline-success rounded-pill w-100 mt-2 fw-bold" 
-                                onclick="sendToWhatsApp(this, '${safeItemNo}', '${safePartNo}', '${safeEngName}', '${safeArabName}', '${item.cost}', '${item.cost_vat}', '${item.price}')">
-                                📲 Send to WhatsApp
-                            </button>
+                            <!-- TWO ACTION BUTTONS NOW -->
+                            <div class="d-flex gap-2 mt-2">
+                                <button class="btn btn-sm btn-outline-success rounded-pill w-50 fw-bold shadow-sm" 
+                                    onclick="sendToWhatsApp(this, '${safeItemNo}', '${safePartNo}', '${safeEngName}', '${safeArabName}', '${item.cost}', '${item.cost_vat}', '${item.price}')">
+                                    📲 Msg Client
+                                </button>
+                                
+                                <button class="btn btn-sm btn-primary rounded-pill w-50 fw-bold shadow-sm" 
+                                    onclick="openOrderModal('${safePartNo}', '${safeEngName}')">
+                                    🛒 Place Order
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -208,7 +292,6 @@
             resultsBody.appendChild(col);
         });
         
-        // Scroll back to top of the results when changing pages
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -222,14 +305,14 @@
         }
     }
 
-    // 5. WHATSAPP INTEGRATION
+    // 5. CLIENT WHATSAPP INTEGRATION
     function sendToWhatsApp(btnElement, itemNo, partNo, engName, arabName, cost, costVat, price) {
         const textToSend = `Item no: ${itemNo}\nPART NO: ${partNo}\nNAME: ${engName}\nARABIC: ${arabName}\n\nSelling Price: ${price} SAR\nCost Price: ${cost}\nCost + VAT: ${costVat}`;
         const encodedText = encodeURIComponent(textToSend);
         const whatsappUrl = `https://wa.me/${MY_PHONE_NUMBER}?text=${encodedText}`;
         
         const originalText = btnElement.innerHTML;
-        btnElement.innerHTML = "✅ Opening WhatsApp...";
+        btnElement.innerHTML = "Opening...";
         btnElement.classList.replace('btn-outline-success', 'btn-success');
         
         window.open(whatsappUrl, '_blank');
@@ -238,6 +321,63 @@
             btnElement.innerHTML = originalText;
             btnElement.classList.replace('btn-success', 'btn-outline-success');
         }, 2000);
+    }
+
+    // ==========================================
+    // 6. NEW PURCHASE ORDER LOGIC
+    // ==========================================
+    
+    // This opens the modal and fills in the part name automatically
+    let currentOrderModal = null;
+    
+    function openOrderModal(partNo, partName) {
+        document.getElementById('modalPartInfo').value = `${partNo} - ${partName}`;
+        
+        // Initialize the Bootstrap modal and show it
+        currentOrderModal = new bootstrap.Modal(document.getElementById('orderModal'));
+        currentOrderModal.show();
+    }
+
+    // This runs when you click "Confirm & Send" inside the modal
+    async function processOrder() {
+        const btn = document.getElementById('confirmOrderBtn');
+        btn.innerText = "Sending to Sheet..."; 
+        btn.disabled = true;
+        
+        const orderData = {
+            origin: document.getElementById('modalOrigin').value,
+            partName: document.getElementById('modalPartInfo').value,
+            quantity: document.getElementById('modalQuantity').value,
+            orderedBy: document.getElementById('modalOrderedBy').value
+        };
+
+        try {
+            // Send to Google Sheets silently
+            const response = await fetch(GOOGLE_SHEET_URL, {
+                method: 'POST', 
+                body: JSON.stringify(orderData),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            });
+            
+            const result = await response.json();
+            
+            if (result.result === 'success') {
+                // Trigger WhatsApp Notification to the Coworkers
+                const waMessage = `*New PO Logged!*\nTab (Origin): ${orderData.origin}\nPart: ${orderData.partName}\nQty: ${orderData.quantity}\nBy: ${orderData.orderedBy}`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(waMessage)}`, '_blank');
+                
+                // Close the modal
+                currentOrderModal.hide();
+                
+            } else {
+                alert("Google Sheets Error: " + result.error + "\n(Did you create the tabs in Google Sheets?)");
+            }
+        } catch (error) {
+            alert('Failed to connect to Google Sheets. Check internet connection.');
+        }
+        
+        btn.innerText = "Confirm & Send"; 
+        btn.disabled = false;
     }
 
     // Start process when page loads
