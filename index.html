@@ -8,18 +8,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
-        /* Using Bootstrap CSS variables so they auto-switch when Light/Dark mode toggles */
-        body { 
-            padding-top: 15px; 
-            transition: background-color 0.3s, color 0.3s; 
-        }
-        .search-container { 
-            position: sticky; top: 0; z-index: 1000; 
-            background-color: var(--bs-body-bg); 
-            padding-bottom: 15px; 
-            border-bottom: 1px solid var(--bs-border-color); 
-            transition: background-color 0.3s;
-        }
+        body { padding-top: 15px; transition: background-color 0.3s, color 0.3s; }
+        .search-container { position: sticky; top: 0; z-index: 1000; background-color: var(--bs-body-bg); padding-bottom: 15px; border-bottom: 1px solid var(--bs-border-color); transition: background-color 0.3s; }
         .card { transition: 0.2s; border-radius: 15px; } 
         .card:hover { border-color: var(--bs-primary) !important; }
         .cost-text { font-size: 0.75rem; }
@@ -31,17 +21,12 @@
     <div class="search-container">
         <div class="d-flex justify-content-between align-items-center mb-3 px-1">
             <h4 class="mb-0 text-primary fw-bold">💎 سهم</h4>
-            
             <div>
-                <button class="btn btn-sm btn-outline-warning rounded-pill px-3 fw-bold me-2" onclick="toggleTheme()" id="themeToggleBtn">
-                    ☀️ Light
-                </button>
+                <button class="btn btn-sm btn-outline-warning rounded-pill px-3 fw-bold me-2" onclick="toggleTheme()" id="themeToggleBtn">☀️ Light</button>
                 <span class="badge bg-secondary rounded-pill px-3 py-2 fs-6" id="totalBadge">Loading...</span>
             </div>
         </div>
-        
         <input type="text" id="searchInput" class="form-control form-control-lg border-primary rounded-pill px-4 shadow-sm" placeholder="Search code (e.g., 2 MISM T)..." autofocus autocomplete="off" disabled>
-        
         <div class="pagination-container px-2">
             <div id="resultCount" class="text-muted small fw-bold">Please wait, downloading data...</div>
             <div id="paginationControls" class="d-none">
@@ -51,9 +36,7 @@
             </div>
         </div>
     </div>
-
     <div class="row g-2 mt-2" id="resultsBody"></div>
-    
     <div id="bottomPagination" class="d-none justify-content-center my-4">
         <button class="btn btn-outline-primary rounded-pill px-4 me-2 shadow-sm" onclick="changePage(-1)">◀ Prev</button>
         <button class="btn btn-outline-primary rounded-pill px-4 shadow-sm" onclick="changePage(1)">Next ▶</button>
@@ -69,12 +52,10 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        
         <div class="mb-3">
             <label class="form-label text-muted small fw-bold">Part Details</label>
             <input type="text" id="modalPartInfo" class="form-control" readonly>
         </div>
-
         <div class="mb-3">
             <label class="form-label text-muted small fw-bold">Vehicle Origin (Select Tab)</label>
             <select id="modalOrigin" class="form-select border-primary shadow-sm">
@@ -85,7 +66,6 @@
                 <option value="Chinese">Chinese</option>
             </select>
         </div>
-
         <div class="row mb-3">
             <div class="col-6">
                 <label class="form-label text-muted small fw-bold">Quantity</label>
@@ -96,7 +76,6 @@
                 <input type="text" id="modalOrderedBy" class="form-control shadow-sm" placeholder="Your Name">
             </div>
         </div>
-
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
@@ -108,17 +87,14 @@
   </div>
 </div>
 
-<!-- Bootstrap JS (Required for Modal to work) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    // ==========================================
     const MY_PHONE_NUMBER = "966558965937"; 
     const ITEMS_PER_PAGE = 50;
     
-    // UPDATED WITH YOUR BRAND NEW GOOGLE SHEET URL!
+    // VERIFIED NEW SCRIPT URL!
     const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbz-uu_htpqNV0PwqrQUEX-oq0D19ox9lHpQmu8ESVDLKxGV7EhuzkdDBeUYQ9qikQ-M7Q/exec";
-    // ==========================================
 
     let allData = [];
     let filteredData = [];
@@ -134,11 +110,9 @@
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
 
-    // --- LIGHT/DARK MODE LOGIC ---
     function toggleTheme() {
         const htmlTag = document.documentElement;
         const themeBtn = document.getElementById('themeToggleBtn');
-        
         if (htmlTag.getAttribute('data-bs-theme') === 'dark') {
             htmlTag.setAttribute('data-bs-theme', 'light');
             themeBtn.innerHTML = '🌙 Dark';
@@ -150,13 +124,12 @@
         }
     }
 
-    // 1. FETCH AND PARSE THE EXCEL FILE
     async function loadExcelData() {
         try {
-            const response = await fetch('1.xlsx'); 
+            // Adding a timestamp to force the browser to get the newest excel file if cached
+            const response = await fetch('1.xlsx?v=' + new Date().getTime()); 
             const arrayBuffer = await response.arrayBuffer();
             const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-            
             const firstSheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[firstSheetName];
             const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
@@ -164,7 +137,6 @@
             for (let i = 1; i < rawData.length; i++) {
                 let row = rawData[i];
                 if (!row || row.length === 0) continue;
-
                 let costPrice = parseFloat(row[17]) || 0;
                 let costVat = (costPrice * 1.15).toFixed(2);
                 let itemNo = (row[1] || "").toString().trim();
@@ -173,26 +145,15 @@
                 let arabName = (row[2] || "").toString().trim();
 
                 allData.push({
-                    item_no: itemNo,
-                    part_no: partNo,
-                    name: engName || arabName,
-                    arab_name: arabName,
-                    eng_name: engName,
-                    qty: parseInt(row[3]) || 0,
-                    price: row[4] || 0,
-                    cost: costPrice.toFixed(2),
-                    cost_vat: costVat,
-                    loc: (row[9] || "").toString().trim(),
-                    search_string: `${itemNo} ${partNo} ${engName} ${arabName}`.toLowerCase()
+                    item_no: itemNo, part_no: partNo, name: engName || arabName, arab_name: arabName, eng_name: engName,
+                    qty: parseInt(row[3]) || 0, price: row[4] || 0, cost: costPrice.toFixed(2), cost_vat: costVat,
+                    loc: (row[9] || "").toString().trim(), search_string: `${itemNo} ${partNo} ${engName} ${arabName}`.toLowerCase()
                 });
             }
-
             filteredData = allData;
             totalBadge.innerText = `${allData.length} Items`;
             searchInput.disabled = false;
-            
             renderPage(1);
-
         } catch (error) {
             console.error("Error loading Excel:", error);
             totalBadge.innerText = "Error!";
@@ -200,10 +161,8 @@
         }
     }
 
-    // 2. SEARCH LOGIC
     searchInput.addEventListener('input', function() {
         const query = this.value.trim().toLowerCase();
-        
         if (query.length < 2) {
             filteredData = allData;
         } else {
@@ -212,14 +171,11 @@
                 return keywords.every(kw => item.search_string.includes(kw));
             });
         }
-        
         renderPage(1);
     });
 
-    // 3. PAGINATION RENDERER
     function renderPage(page) {
         currentPage = page;
-        
         const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
         const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
         const endIndex = startIndex + ITEMS_PER_PAGE;
@@ -241,7 +197,6 @@
         }
 
         resultsBody.innerHTML = '';
-        
         pageData.forEach(item => {
             const col = document.createElement('div');
             col.className = 'col-12 col-md-6 col-lg-4'; 
@@ -260,10 +215,8 @@
                             <span class="badge ${qtyColor} fs-6 rounded-pill px-3 shadow-sm">Qty: ${item.qty}</span>
                         </div>
                         <h6 class="card-subtitle mb-2 text-warning font-monospace fw-bold">${item.part_no || 'No Part #'}</h6>
-                        
                         <p class="card-text small mb-1">${item.eng_name || item.name || ''}</p>
                         <p class="card-text small text-info fw-bold mb-3 text-end" dir="rtl">${item.arab_name || ''}</p>
-                        
                         <div class="mt-auto">
                             <div class="d-flex justify-content-between text-muted cost-text mb-1 px-1 fw-bold">
                                 <span>Cost: ${item.cost}</span>
@@ -273,13 +226,11 @@
                                 <span class="fs-6">💰 ${item.price} SAR</span>
                                 <span class="fs-6">📍 Loc: ${item.loc || 'N/A'}</span>
                             </div>
-                            
                             <div class="d-flex gap-2 mt-2">
                                 <button class="btn btn-sm btn-outline-success rounded-pill w-50 fw-bold shadow-sm" 
                                     onclick="sendToWhatsApp(this, '${safeItemNo}', '${safePartNo}', '${safeEngName}', '${safeArabName}', '${item.cost}', '${item.cost_vat}', '${item.price}')">
                                     📲 Msg Client
                                 </button>
-                                
                                 <button class="btn btn-sm btn-primary rounded-pill w-50 fw-bold shadow-sm" 
                                     onclick="openOrderModal('${safePartNo}', '${safeEngName}')">
                                     🛒 Place Order
@@ -291,42 +242,29 @@
             `;
             resultsBody.appendChild(col);
         });
-        
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // 4. PAGINATION BUTTON HANDLER
     function changePage(direction) {
         const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
         let newPage = currentPage + direction;
-        
-        if (newPage >= 1 && newPage <= totalPages) {
-            renderPage(newPage);
-        }
+        if (newPage >= 1 && newPage <= totalPages) renderPage(newPage);
     }
 
-    // 5. CLIENT WHATSAPP INTEGRATION
     function sendToWhatsApp(btnElement, itemNo, partNo, engName, arabName, cost, costVat, price) {
         const textToSend = `Item no: ${itemNo}\nPART NO: ${partNo}\nNAME: ${engName}\nARABIC: ${arabName}\n\nSelling Price: ${price} SAR\nCost Price: ${cost}\nCost + VAT: ${costVat}`;
         const encodedText = encodeURIComponent(textToSend);
         const whatsappUrl = `https://wa.me/${MY_PHONE_NUMBER}?text=${encodedText}`;
-        
         const originalText = btnElement.innerHTML;
         btnElement.innerHTML = "Opening...";
         btnElement.classList.replace('btn-outline-success', 'btn-success');
-        
         window.open(whatsappUrl, '_blank');
-        
         setTimeout(() => {
             btnElement.innerHTML = originalText;
             btnElement.classList.replace('btn-success', 'btn-outline-success');
         }, 2000);
     }
 
-    // ==========================================
-    // 6. NEW PURCHASE ORDER LOGIC
-    // ==========================================
-    
     let currentOrderModal = null;
     
     function openOrderModal(partNo, partName) {
@@ -348,10 +286,12 @@
         };
 
         try {
+            // Tweak: Added redirect: "follow" to guarantee Google Apps Script network logic works
             const response = await fetch(GOOGLE_SHEET_URL, {
                 method: 'POST', 
                 body: JSON.stringify(orderData),
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                redirect: "follow" 
             });
             
             const result = await response.json();
@@ -361,10 +301,11 @@
                 window.open(`https://wa.me/?text=${encodeURIComponent(waMessage)}`, '_blank');
                 currentOrderModal.hide();
             } else {
-                alert("Google Sheets Error: " + result.error + "\n(Did you create the tabs in Google Sheets?)");
+                alert("Google Sheets Error: " + result.error);
             }
         } catch (error) {
-            alert('Failed to connect to Google Sheets. Check internet connection.');
+            console.error("Network Error: ", error);
+            alert('Failed to connect to Google Sheets. If this persists, try opening the page in an Incognito Tab.');
         }
         
         btn.innerText = "Confirm & Send"; 
@@ -375,3 +316,5 @@
 </script>
 </body>
 </html>
+
+
