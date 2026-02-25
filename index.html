@@ -60,7 +60,7 @@
     </div>
 </div>
 
-<!-- ================= ORDER MODAL (NEW) ================= -->
+<!-- ================= ORDER MODAL ================= -->
 <div class="modal fade" id="orderModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -115,8 +115,9 @@
     // ==========================================
     const MY_PHONE_NUMBER = "966558965937"; 
     const ITEMS_PER_PAGE = 50;
-    // Your exact Google Apps Script Web App URL
-    const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbxL6QViEytvoQCYNuU5JnjaWPSU1aZVv7dHd2y8hfSih4upot4M-zW_oLoezx3hsPH2JA/exec";
+    
+    // UPDATED WITH YOUR BRAND NEW GOOGLE SHEET URL!
+    const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbz-uu_htpqNV0PwqrQUEX-oq0D19ox9lHpQmu8ESVDLKxGV7EhuzkdDBeUYQ9qikQ-M7Q/exec";
     // ==========================================
 
     let allData = [];
@@ -195,7 +196,7 @@
         } catch (error) {
             console.error("Error loading Excel:", error);
             totalBadge.innerText = "Error!";
-            resultCount.innerText = "Could not load file. Is ITEMS SAHAM 1.xlsx uploaded?";
+            resultCount.innerText = "Could not load file. Is 1.xlsx uploaded?";
         }
     }
 
@@ -273,7 +274,6 @@
                                 <span class="fs-6">📍 Loc: ${item.loc || 'N/A'}</span>
                             </div>
                             
-                            <!-- TWO ACTION BUTTONS NOW -->
                             <div class="d-flex gap-2 mt-2">
                                 <button class="btn btn-sm btn-outline-success rounded-pill w-50 fw-bold shadow-sm" 
                                     onclick="sendToWhatsApp(this, '${safeItemNo}', '${safePartNo}', '${safeEngName}', '${safeArabName}', '${item.cost}', '${item.cost_vat}', '${item.price}')">
@@ -327,18 +327,14 @@
     // 6. NEW PURCHASE ORDER LOGIC
     // ==========================================
     
-    // This opens the modal and fills in the part name automatically
     let currentOrderModal = null;
     
     function openOrderModal(partNo, partName) {
         document.getElementById('modalPartInfo').value = `${partNo} - ${partName}`;
-        
-        // Initialize the Bootstrap modal and show it
         currentOrderModal = new bootstrap.Modal(document.getElementById('orderModal'));
         currentOrderModal.show();
     }
 
-    // This runs when you click "Confirm & Send" inside the modal
     async function processOrder() {
         const btn = document.getElementById('confirmOrderBtn');
         btn.innerText = "Sending to Sheet..."; 
@@ -352,7 +348,6 @@
         };
 
         try {
-            // Send to Google Sheets silently
             const response = await fetch(GOOGLE_SHEET_URL, {
                 method: 'POST', 
                 body: JSON.stringify(orderData),
@@ -362,13 +357,9 @@
             const result = await response.json();
             
             if (result.result === 'success') {
-                // Trigger WhatsApp Notification to the Coworkers
                 const waMessage = `*New PO Logged!*\nTab (Origin): ${orderData.origin}\nPart: ${orderData.partName}\nQty: ${orderData.quantity}\nBy: ${orderData.orderedBy}`;
                 window.open(`https://wa.me/?text=${encodeURIComponent(waMessage)}`, '_blank');
-                
-                // Close the modal
                 currentOrderModal.hide();
-                
             } else {
                 alert("Google Sheets Error: " + result.error + "\n(Did you create the tabs in Google Sheets?)");
             }
@@ -380,7 +371,6 @@
         btn.disabled = false;
     }
 
-    // Start process when page loads
     window.onload = loadExcelData;
 </script>
 </body>
